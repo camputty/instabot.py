@@ -683,7 +683,11 @@ class InstaBot:
             self.get_media_id_recent_feed()
         if len(self.media_on_feed) != 0:
             chooser = random.randint(0, len(self.media_on_feed) - 1)
-            current_id = self.media_on_feed[chooser]['node']["owner"]["id"]
+            if "owner" in self.media_on_feed[chooser]["node"]:
+                current_id = self.media_on_feed[chooser]['node']["owner"]["id"]
+            else:
+                print("   >>>> owner error")
+                return
             current_user = self.media_on_feed[chooser]['node']["owner"][
                 "username"]
 
