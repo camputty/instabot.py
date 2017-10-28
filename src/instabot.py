@@ -380,7 +380,7 @@ class InstaBot:
                                             (tag.decode('ASCII')).strip('#'))
                                         for tag in caption.split()
                                         if (tag.decode('ASCII')
-                                            ).startswith("#")
+                                           ).startswith("#")
                                     }
                                 else:
                                     tags = {
@@ -388,7 +388,7 @@ class InstaBot:
                                             (tag.decode('ASCII')).strip('#'))
                                         for tag in caption.split()
                                         if (tag.decode('ASCII')
-                                            ).startswith("#")
+                                           ).startswith("#")
                                     }
 
                                 if tags.intersection(tag_blacklist):
@@ -425,6 +425,7 @@ class InstaBot:
                                     # Some error. If repeated - can be ban!
                                     if self.error_400 >= self.error_400_to_ban:
                                         # Look like you banned!
+                                        self.write_log("Looks Like You Banned")
                                         time.sleep(self.ban_sleep_time)
                                     else:
                                         self.error_400 += 1
