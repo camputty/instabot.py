@@ -9,6 +9,7 @@ import logging
 import random
 import signal
 import sys
+import sqlite3
 
 if 'threading' in sys.modules:
     del sys.modules['threading']
@@ -38,7 +39,8 @@ class InstaBot:
 
     https://github.com/LevPasha/instabot.py
     """
-
+    follows_db = sqlite3.connect("follows_db.db", timeout = 0, isolation_level = None)
+    follows_db_c = follows_db.cursor()
     url = 'https://www.instagram.com/'
     url_tag = 'https://www.instagram.com/explore/tags/%s/?__a=1'
     url_likes = 'https://www.instagram.com/web/likes/%s/like/'
@@ -136,7 +138,9 @@ class InstaBot:
                  tag_blacklist=[],
                  unwanted_username_list=[],
                  unfollow_whitelist=[]):
-
+        
+        self.follows_db_c.execute("CREATE TABLE IF NOT EXISTS usernames (username varchar(300))")
+        self.follows_db_c.execute("CREATE TABLE IF NOT EXISTS medias (media_id varchar(300))")
         self.bot_start = datetime.datetime.now()
         self.unfollow_break_min = unfollow_break_min
         self.unfollow_break_max = unfollow_break_max
@@ -368,7 +372,12 @@ class InstaBot:
                                 self.write_log(
                                     "Keep calm - It's your own media ;)")
                                 return False
-
+                            if self.follows_db_c.execute("SELECT EXISTS(SELECT 1 FROM medias WHERE media_id='"+
+                                                          self.media_by_tag[i]['id'] +
+                                                          "' LIMIT 1)").fetchone()[0] > 0:
+                                self.write_log(
+                                    "Keep calm - It's already liked " + self.media_by_tag[i]['id'])
+                                return False
                             try:
                                 caption = self.media_by_tag[i][
                                     'caption'].encode(
@@ -417,15 +426,18 @@ class InstaBot:
                                     log_string = "Liked: %s. Like #%i." % \
                                                  (self.media_by_tag[i]['id'],
                                                   self.like_counter)
+                                    self.follows_db_c.execute("INSERT INTO medias (media_id) VALUES('"+self.media_by_tag[i]['id']+"')")
                                     self.write_log(log_string)
                                 elif like.status_code == 400:
-                                    log_string = "Not liked: %i" \
+                                    log_string = "Not liked: %i  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" \
                                                  % (like.status_code)
                                     self.write_log(log_string)
+                                    self.follows_db_c.execute("INSERT INTO medias (media_id) VALUES('"+self.media_by_tag[i]['id']+"')")
                                     # Some error. If repeated - can be ban!
                                     if self.error_400 >= self.error_400_to_ban:
                                         # Look like you banned!
                                         self.write_log("Looks Like You Banned")
+                                        self.error_400 = 0
                                         time.sleep(self.ban_sleep_time)
                                     else:
                                         self.error_400 += 1
@@ -498,10 +510,12 @@ class InstaBot:
             try:
                 follow = self.s.post(url_follow)
                 if follow.status_code == 200:
+                    self.error_400 = 0
                     self.follow_counter += 1
                     log_string = "Followed: %s #%i." % (user_id,
                                                         self.follow_counter)
                     self.write_log(log_string)
+                    self.follows_db_c.execute("INSERT INTO usernames (username) VALUES('"+user_id+"')")
                 return follow
             except:
                 self.write_log("Except on follow!")
@@ -606,6 +620,13 @@ class InstaBot:
             if self.media_by_tag[0]["owner"]["id"] == self.user_id:
                 self.write_log("Keep calm - It's your own profile ;)")
                 return
+            if self.follows_db_c.execute("SELECT EXISTS(SELECT 1 FROM usernames WHERE username='"+
+                                                          self.media_by_tag[0]["owner"]["id"] +
+                                                          "' LIMIT 1)").fetchone()[0] > 0:
+                self.write_log("Already followed before " + self.media_by_tag[0]["owner"]["id"])
+                self.next_iteration["Follow"] = time.time() + \
+                                                self.add_time(self.follow_delay)
+                return False
             log_string = "Trying to follow: %s" % (
                 self.media_by_tag[0]["owner"]["id"])
             self.write_log(log_string)
@@ -615,6 +636,7 @@ class InstaBot:
                     [self.media_by_tag[0]["owner"]["id"], time.time()])
                 self.next_iteration["Follow"] = time.time() + \
                                                 self.add_time(self.follow_delay)
+                
 
     def new_auto_mod_unfollow(self):
         if time.time() > self.next_iteration["Unfollow"] and \
