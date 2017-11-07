@@ -376,7 +376,7 @@ class InstaBot:
                                                           self.media_by_tag[i]['id'] +
                                                           "' LIMIT 1)").fetchone()[0] > 0:
                                 self.write_log(
-                                    "Keep calm - It's already liked ;)")
+                                    "Keep calm - It's already liked " + self.media_by_tag[i]['id'])
                                 return False
                             try:
                                 caption = self.media_by_tag[i][
@@ -429,7 +429,7 @@ class InstaBot:
                                     self.follows_db_c.execute("INSERT INTO medias (media_id) VALUES('"+self.media_by_tag[i]['id']+"')")
                                     self.write_log(log_string)
                                 elif like.status_code == 400:
-                                    log_string = "Not liked: %i" \
+                                    log_string = "Not liked: %i  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" \
                                                  % (like.status_code)
                                     self.write_log(log_string)
                                     self.follows_db_c.execute("INSERT INTO medias (media_id) VALUES('"+self.media_by_tag[i]['id']+"')")
@@ -437,6 +437,7 @@ class InstaBot:
                                     if self.error_400 >= self.error_400_to_ban:
                                         # Look like you banned!
                                         self.write_log("Looks Like You Banned")
+                                        self.error_400 = 0
                                         time.sleep(self.ban_sleep_time)
                                     else:
                                         self.error_400 += 1
@@ -509,6 +510,7 @@ class InstaBot:
             try:
                 follow = self.s.post(url_follow)
                 if follow.status_code == 200:
+                    self.error_400 = 0
                     self.follow_counter += 1
                     log_string = "Followed: %s #%i." % (user_id,
                                                         self.follow_counter)
@@ -622,7 +624,9 @@ class InstaBot:
                                                           self.media_by_tag[0]["owner"]["id"] +
                                                           "' LIMIT 1)").fetchone()[0] > 0:
                 self.write_log("Already followed before " + self.media_by_tag[0]["owner"]["id"])
-                return
+                self.next_iteration["Follow"] = time.time() + \
+                                                self.add_time(self.follow_delay)
+                return False
             log_string = "Trying to follow: %s" % (
                 self.media_by_tag[0]["owner"]["id"])
             self.write_log(log_string)
