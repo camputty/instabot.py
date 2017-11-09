@@ -317,14 +317,14 @@ class InstaBot:
                 self.bot_follow_list.remove(f)
 
         # Logout
-        if (self.login_status):
+        if self.login_status:
             self.logout()
         exit(0)
 
     def get_media_id_by_tag(self, tag):
         """ Get media ID set, by your hashtag """
 
-        if (self.login_status):
+        if self.login_status:
             log_string = "Get media id by tag: %s" % (tag)
             self.write_log(log_string)
             if self.login_status == 1:
@@ -621,10 +621,10 @@ class InstaBot:
             for i in range(len(self.media_by_tag)):
                 if self.media_by_tag[i]["owner"]["id"] == self.user_id:
                     pass
-                self.write_log("Keep calm - It's your own profile ;)")
-            if self.follows_db_c.execute("SELECT EXISTS(SELECT 1 FROM usernames WHERE username='"+
+                    self.write_log("Keep calm - It's your own profile ;)")
+                if self.follows_db_c.execute("SELECT EXISTS(SELECT 1 FROM usernames WHERE username='"+
                                          self.media_by_tag[i]["owner"]["id"] +
-                                                          "' LIMIT 1)").fetchone()[0] > 0:
+                                         "' LIMIT 1)").fetchone()[0] > 0:
                     pass
                     self.write_log("Already followed before " + self.media_by_tag[i]["owner"]["id"])
                 media_owner_id = self.media_by_tag[i]["owner"]["id"]
@@ -642,7 +642,7 @@ class InstaBot:
                     [media_owner_id, time.time()])
                 self.next_iteration["Follow"] = time.time() + \
                                                 self.add_time(self.follow_delay)
-                
+
     def new_auto_mod_unfollow(self):
         if time.time() > self.next_iteration["Unfollow"] and \
                         self.unfollow_per_day != 0 and len(self.bot_follow_list) > 0:
@@ -737,8 +737,7 @@ class InstaBot:
 
         if self.login_status:
             now_time = datetime.datetime.now()
-            log_string = "%s : Get user info \n%s" % (
-                self.user_login, now_time.strftime("%d.%m.%Y %H:%M"))
+            log_string = "%s : Get user info" % (self.user_login)
             self.write_log(log_string)
             if self.login_status == 1:
                 url_tag = self.url_user_detail % (current_user)
