@@ -623,8 +623,8 @@ class InstaBot:
                     pass
                     self.write_log("Keep calm - It's your own profile ;)")
                 if self.follows_db_c.execute("SELECT EXISTS(SELECT 1 FROM usernames WHERE username='"+
-                                         self.media_by_tag[i]["owner"]["id"] +
-                                         "' LIMIT 1)").fetchone()[0] > 0:
+                                             self.media_by_tag[i]["owner"]["id"] +
+                                             "' LIMIT 1)").fetchone()[0] > 0:
                     pass
                     self.write_log("Already followed before " + self.media_by_tag[i]["owner"]["id"])
                 media_owner_id = self.media_by_tag[i]["owner"]["id"]
